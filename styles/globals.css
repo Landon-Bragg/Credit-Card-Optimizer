@@ -1,0 +1,29 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* shadcn/ui preflight – brings in link/button coloration defaults */
+@import "@/components/ui/globals.css";
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  @apply bg-gray-50 dark:bg-neutral-900 text-gray-900 dark:text-gray-100;
+}
+
+/* Harmonise native form controls with shadcn ones */
+@layer base {
+  input[type="number"],
+  input[type="text"],
+  input[type="email"],
+  select,
+  textarea {
+    @apply border border-gray-300 dark:border-neutral-700 bg-white dark:bg-neutral-800 rounded-md px-3 py-2 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary;
+  }
+  input::-webkit-inner-spin-button,
+  input::-webkit-outer-spin-button {
+    @apply appearance-none;
+  }
+}
