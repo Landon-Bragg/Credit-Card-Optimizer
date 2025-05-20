@@ -1,4 +1,5 @@
 "use client";
+
 import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -22,9 +23,33 @@ const CATEGORIES = [
   { key: "rent", label: "Rent / Housing" },
   { key: "other", label: "Other / Misc" },
 ] as const;
-
 type CategoryKey = (typeof CATEGORIES)[number]["key"];
 
+/* ----- loyalty options ----- */
+export const AIRLINE_OPTIONS = [
+  "MileagePlus",
+  "AAdvantage",
+  "SkyMiles",
+  "Aeroplan",
+  "Flying Blue",
+  "Avios",
+  "Executive Club",
+  "KrisFlyer",
+  "LifeMiles",
+  "Emirates Skywards",
+  "Qantas FF",
+  "Virgin Red",
+  "Rapid Rewards",
+] as const;
+
+export const HOTEL_OPTIONS = [
+  "World of Hyatt",
+  "Marriott Bonvoy",
+  "Hilton Honors",
+  "IHG One Rewards",
+] as const;
+
+/* ----- data contracts ----- */
 export interface Spending {
   travel: number;
   dining: number;
@@ -35,81 +60,90 @@ export interface Spending {
   rent: number;
   other: number;
 }
+
 export interface Preferences {
-  preferredPrograms: string[];
+  preferredAirlines: string[];
+  preferredHotels: string[];
   maxAnnualFee: number;
   rewardType: "cash" | "points";
 }
 
-// condensed list (trimmed for brevity – use the big list if needed)
-export const LOYALTY_OPTIONS = [
-  "MileagePlus",
-  "Aeroplan",
-  "KrisFlyer",
-  "AAdvantage",
-  "Executive Club",
-  "SkyMiles",
-  "Flying Blue",
-  "World of Hyatt",
-  "Marriott Bonvoy",
-  "Hilton Honors",
-  "IHG One Rewards",
-  "Rapid Rewards",
-] as const;
-
 export default function SpendingForm({
   onCalculate,
 }: {
-  onCalculate: (spend: Spending, prefs: Preferences & { noFeeOnly: boolean }) => void;
+  onCalculate: (
+    spend: Spending,
+    prefs: Preferences & { noFeeOnly: boolean }
+  ) => void;
 }) {
+  /* ----- state ----- */
   const [spend, setSpend] = useState<Spending>(() =>
-    CATEGORIES.reduce((o, { key }) => ({ ...o, [key]: 0 }), {} as Spending)
+    CATEGORIES.reduce(
+      (o, { key }) => ({ ...o, [key]: 0 }),
+      {} as Spending
+    )
   );
-  const [preferred, setPreferred] = useState<string[]>([]);
+
+  const [airlines, setAirlines] = useState<string[]>([]);
+  const [hotels, setHotels] = useState<string[]>([]);
   const [maxFee, setMaxFee] = useState(999);
   const [noFeeOnly, setNoFeeOnly] = useState(false);
 
-  // ------ persist filters ------
+  /* ----- localStorage persistence ----- */
   useEffect(() => {
-    localStorage.setItem("preferred_programs", JSON.stringify(preferred));
-  }, [preferred]);
+    localStorage.setItem("pref_airlines", JSON.stringify(airlines));
+    localStorage.setItem("pref_hotels", JSON.stringify(hotels));
+  }, [airlines, hotels]);
+
   useEffect(() => {
     localStorage.setItem("no_fee_only", JSON.stringify(noFeeOnly));
   }, [noFeeOnly]);
+
   useEffect(() => {
-    const savedPref = JSON.parse(localStorage.getItem("preferred_programs") || "null");
-    if (Array.isArray(savedPref)) setPreferred(savedPref);
-    const savedFee = JSON.parse(localStorage.getItem("no_fee_only") || "null");
-    if (typeof savedFee === "boolean") setNoFeeOnly(savedFee);
+    const savedAir = JSON.parse(localStorage.getItem("pref_airlines") || "null");
+    const savedHot = JSON.parse(localStorage.getItem("pref_hotels") || "null");
+    const savedNoFee = JSON.parse(localStorage.getItem("no_fee_only") || "null");
+    if (Array.isArray(savedAir)) setAirlines(savedAir);
+    if (Array.isArray(savedHot)) setHotels(savedHot);
+    if (typeof savedNoFee === "boolean") setNoFeeOnly(savedNoFee);
   }, []);
 
+  /* ----- helpers ----- */
   const handleSpend = (field: CategoryKey, val: string) =>
     setSpend((s) => ({ ...s, [field]: Number(val) }));
 
+  /* ----- view ----- */
   return (
     <form
+      className="space-y-6"
       onSubmit={(e) => {
         e.preventDefault();
         onCalculate(spend, {
-          preferredPrograms: preferred,
+          preferredAirlines: airlines,
+          preferredHotels: hotels,
           maxAnnualFee: noFeeOnly ? 0 : maxFee,
           rewardType: "points",
           noFeeOnly,
         });
       }}
-      className="space-y-6"
     >
-      {/* Spending */}
+      {/* --- Spending inputs --- */}
       <fieldset className="space-y-2">
         <legend className="font-semibold mb-2 flex items-center gap-1">
           Monthly Spending
           <Tooltip>
             <TooltipTrigger asChild>
-              <Info size={14} className="cursor-pointer text-muted-foreground" />
+              <Info
+                size={14}
+                className="cursor-pointer text-muted-foreground"
+              />
             </TooltipTrigger>
-            <TooltipContent side="right">Average dollars per month.</TooltipContent>
+            <TooltipContent side="right">
+              Average dollars per month.
+            </TooltipContent>
           </Tooltip>
         </legend>
+
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {CATEGORIES.map(({ key, label }) => (
             <div key={key} className="space-y-1">
@@ -120,20 +154,25 @@ export default function SpendingForm({
                 min={0}
                 step={1}
                 value={spend[key]}
-                onChange={(e) => handleSpend(key as CategoryKey, e.target.value)}
+                onChange={(e) => handleSpend(key, e.target.value)}
               />
             </div>
           ))}
         </div>
       </fieldset>
 
-      {/* Filters */}
+      {/* --- Filters --- */}
       <fieldset className="space-y-4">
         <legend className="font-semibold mb-2">Filters</legend>
+
         <label className="flex items-center gap-2">
-          <Checkbox checked={noFeeOnly} onCheckedChange={(v) => setNoFeeOnly(!!v)} />
-          No‑annual‑fee cards only
+          <Checkbox
+            checked={noFeeOnly}
+            onCheckedChange={(v) => setNoFeeOnly(!!v)}
+          />
+          No-annual-fee cards only
         </label>
+
         {!noFeeOnly && (
           <div className="flex flex-col max-w-xs">
             <Label htmlFor="maxFee">Max annual fee ($)</Label>
@@ -148,13 +187,25 @@ export default function SpendingForm({
           </div>
         )}
 
+        {/* --- Airline multiselect --- */}
         <div className="space-y-2">
-          <Label>Preferred airline / hotel programs</Label>
+          <Label>Preferred airline programs</Label>
           <MultiSelect
-            options={LOYALTY_OPTIONS as unknown as string[]}
-            selected={preferred}
-            onChange={setPreferred}
-            placeholder="Choose programs…"
+            options={AIRLINE_OPTIONS as unknown as string[]}
+            selected={airlines}
+            onChange={setAirlines}
+            placeholder="Choose airlines…"
+          />
+        </div>
+
+        {/* --- Hotel multiselect --- */}
+        <div className="space-y-2">
+          <Label>Preferred hotel programs</Label>
+          <MultiSelect
+            options={HOTEL_OPTIONS as unknown as string[]}
+            selected={hotels}
+            onChange={setHotels}
+            placeholder="Choose hotels…"
           />
         </div>
       </fieldset>

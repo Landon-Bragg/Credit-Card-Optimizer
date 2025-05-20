@@ -1,5 +1,5 @@
 import { cards } from "@/lib/sampleData";
-import CardDetail from "@/components/CardDetail";
+import CardDetail from "@/components/CardDetails";
 
 export default function CardPage({ params }: { params: { id: string } }) {
   const card = cards.find((c) => c.id === params.id);

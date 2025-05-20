@@ -252,5 +252,115 @@ export const cards: CreditCard[] = [
     // rest unchanged
     disclaimer: "Earn 5% on the top eligible category each billing cycle on up to $500 spend; 1% thereafter.",
   },
+  /* ---------- NEW TRANSFERABLE & TRAVEL ---------- */
+{
+    id: "csr",
+    name: "Chase Sapphire Reserve®",
+    issuer: "Chase",
+    image: "/cards/csr.png",
+    annualFee: 550,
+    defaultPointValue: 1.8,
+    type: "points",
+    rewardStructure: { type: "category", categories: { travel: 3, dining: 3, other: 1 } },
+    loyaltyPrograms: [
+      "MileagePlus","Aeroplan","KrisFlyer","LifeMiles","Executive Club",
+      "Flying Blue","Emirates Skywards","World of Hyatt","Marriott Bonvoy","IHG One Rewards"
+    ],
+    signupBonus: { amount: 60000, spendRequirement: 4000, months: 3 },
+    benefits: [
+      { description: "$300 Annual Travel Credit", value: 300, recurring: "annual" },
+      { description: "Priority Pass Select", value: 150, recurring: "annual" }
+    ],
+    creditScore: [720, 850],
+  },
+  {
+    id: "amex_gold",
+    name: "American Express® Gold",
+    issuer: "Amex",
+    image: "/cards/amex_gold.png",
+    annualFee: 250,
+    defaultPointValue: 1.6, // Amex MR
+    type: "points",
+    rewardStructure: { type: "category", categories: { dining: 4, groceries: 4, travel: 3, other: 1 } },
+    loyaltyPrograms: [
+      "SkyMiles","Avios","Aeroplan","Flying Blue","KrisFlyer",
+      "Emirates Skywards","Etihad Guest","Hilton Honors","Marriott Bonvoy"
+    ],
+    signupBonus: { amount: 60000, spendRequirement: 4000, months: 6 },
+    benefits: [
+      { description: "$120 Dining Credit", value: 120, recurring: "annual" },
+      { description: "$120 Uber Cash", value: 120, recurring: "annual" }
+    ],
+    creditScore: [700, 850],
+  },
+  {
+    id: "amex_platinum",
+    name: "American Express® Platinum",
+    issuer: "Amex",
+    image: "/cards/amex_platinum.png",
+    annualFee: 695,
+    defaultPointValue: 1.6,
+    type: "points",
+    rewardStructure: { type: "category", categories: { travel: 5, dining: 1, other: 1 } },
+    loyaltyPrograms: [
+      "SkyMiles","Avios","Aeroplan","Flying Blue","KrisFlyer",
+      "Iberia Plus","ANA Mileage Club","Hilton Honors","Marriott Bonvoy"
+    ],
+    signupBonus: { amount: 80000, spendRequirement: 6000, months: 6 },
+    benefits: [
+      { description: "$200 Airline Incidental Credit", value: 200, recurring: "annual" },
+      { description: "$200 Uber Cash", value: 200, recurring: "annual" },
+      { description: "Global Lounge Collection", value: 300, recurring: "annual" }
+    ],
+    creditScore: [720, 850],
+  },
+  {
+    id: "venture_x",
+    name: "Capital One Venture X",
+    issuer: "Capital One",
+    image: "/cards/venture_x.png",
+    annualFee: 395,
+    defaultPointValue: 1.7, // C1 miles
+    type: "points",
+    rewardStructure: { type: "category", categories: { travel: 10, dining: 2, other: 2 } },
+    loyaltyPrograms: [
+      "AAdvantage","AeroMexico Rewards","Aeroplan","Avios","Flying Blue",
+      "KrisFlyer","LifeMiles","Qantas FF","Etihad Guest","Virgin Red"
+    ],
+    signupBonus: { amount: 75000, spendRequirement: 4000, months: 3 },
+    benefits: [
+      { description: "$300 Annual Travel Portal Credit", value: 300, recurring: "annual" },
+      { description: "10,000 mi Anniversary Bonus", value: 170, recurring: "annual" }
+    ],
+    creditScore: [720, 850],
+  },
+  /* ---------- NEW CASHBACK ---------- */
+  {
+    id: "citi_double_cash",
+    name: "Citi® Double Cash",
+    issuer: "Citi",
+    image: "/cards/citi_double_cash.png",
+    annualFee: 0,
+    defaultPointValue: 1,
+    type: "cash",
+    rewardStructure: { type: "fixed", rate: 2 },
+    loyaltyPrograms: [],
+    benefits: [],
+    creditScore: [670, 850],
+  },
+  {
+    id: "capital_one_savor",
+    name: "Capital One Savor®",
+    issuer: "Capital One",
+    image: "/cards/savor.png",
+    annualFee: 95,
+    defaultPointValue: 1,
+    type: "cash",
+    rewardStructure: { type: "category", categories: { dining: 4, entertainment: 4, groceries: 3, other: 1 } },
+    loyaltyPrograms: [],
+    benefits: [],
+    creditScore: [700, 850],
+  },
+  
 ];
 

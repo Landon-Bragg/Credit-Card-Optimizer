@@ -1,4 +1,3 @@
-"use client";
 import { CreditCard } from "@/lib/sampleData";
 import {
   Tabs,

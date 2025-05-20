@@ -1,4 +1,5 @@
 import { CreditCard } from "./sampleData";
+
 export interface Spending {
   travel: number;
   dining: number;
@@ -9,12 +10,14 @@ export interface Spending {
   rent: number;
   other: number;
 }
+
 export interface Preferences {
   preferredPrograms: string[];
   maxAnnualFee: number;
   rewardType: "cash" | "points";
-  noFeeOnly: boolean;
+  noFeeOnly?: boolean;
 }
+
 export interface CardResult {
   card: CreditCard;
   monthlyRewards: number;
@@ -24,84 +27,88 @@ export interface CardResult {
 }
 
 export function calculateCardValue(
-  card: CreditCard,
-  spend: Spending,
-  prefs: Preferences
-): CardResult {
-  const catSpend = { ...spend };
-
-  // helper to apply monthly cap
-  const applyCap = (amount: number, cap: number, rate: number) => {
-    return Math.min(amount, cap) * rate + Math.max(0, amount - cap) * 1;
-  };
-
-  const monthlyPts = (() => {
-    const rs = card.rewardStructure;
-
-    switch (rs.type) {
-      case "fixed": {
-        const total = Object.values(catSpend).reduce((a, b) => a + b, 0);
-        return total * rs.rate;
-      }
-      case "category": {
-        let total = 0;
-        for (const [cat, amt] of Object.entries(catSpend)) {
-          const rate = rs.categories[cat] ?? 1;
-          if (card.id === "blue_cash_preferred" && cat === "groceries") {
-            // 6% groceries on first $500/mo
-            total += applyCap(amt, 500, rate);
-          } else {
-            total += amt * rate;
+    card: CreditCard,
+    spend: Spending,
+    prefs: Preferences
+  ): CardResult {
+    const catSpend = { ...spend };
+  
+    /* NEW — if the card isn’t Bilt, pretend rent spend is $0 */
+    if (card.id !== "bilt") catSpend.rent = 0;
+  
+    // helper to apply monthly cap
+    const applyCap = (amount: number, cap: number, rate: number) =>
+      Math.min(amount, cap) * rate + Math.max(0, amount - cap) * 1;
+  
+    const monthlyPts = (() => {
+        const rs = card.rewardStructure;
+      
+        switch (rs.type) {
+          case "fixed": {
+            const total = Object.values(catSpend).reduce((a, b) => a + b, 0);
+            return total * rs.rate;
           }
-        }
-        return total;
-      }
-      case "dynamic": {
-        // Citi Custom Cash – 5× on top categories up to $500
-        const sorted = Object.entries(catSpend).sort((a, b) => b[1] - a[1]);
-        let pts = 0;
-        let categoriesCounted = 0;
-        for (const [cat, amt] of sorted) {
-          if (categoriesCounted < rs.topCategories) {
-            const bonusSpend = Math.min(amt, 500);
-            pts += bonusSpend * 5 + (amt - bonusSpend) * 1;
-            categoriesCounted++;
-          } else {
-            pts += amt * 1;
+          case "category": {
+            let total = 0;
+            for (const [cat, amt] of Object.entries(catSpend)) {
+              const rate = rs.categories[cat] ?? 1;
+              total += cat === "groceries" && card.id === "blue_cash_preferred"
+                ? applyCap(amt, 500, rate)
+                : amt * rate;
+            }
+            return total;
           }
-        }
-        return pts;
-      }
-      case "rotating": {
-        // Discover 5% on rotating categories – cap $1 500/quarter → $500/mo
-        let bonusSpend = 0;
-        let otherSpend = 0;
-        for (const [cat, amt] of Object.entries(catSpend)) {
-          const rate = rs.quarterly[cat] ?? 1;
-          if (rate > 1) {
-            bonusSpend += Math.min(amt, rs.cap / 3); // monthly cap
-            otherSpend += Math.max(0, amt - rs.cap / 3);
-          } else {
-            otherSpend += amt;
+          case "dynamic": {
+            const sorted = Object.entries(catSpend).sort((a, b) => b[1] - a[1]);
+            let pts = 0,
+              counted = 0,
+              remaining = 500;
+            for (const [, amt] of sorted) {
+              if (counted < rs.topCategories) {
+                const bonus = Math.min(amt, remaining);
+                pts += bonus * 5 + (amt - bonus) * 1;
+                remaining -= bonus;
+                counted++;
+              } else pts += amt;
+            }
+            return pts;
           }
+          case "rotating": {
+            let bonusSpend = 0,
+              otherSpend = 0,
+              cap = rs.cap / 3;
+            for (const [cat, amt] of Object.entries(catSpend)) {
+              const rate = rs.quarterly[cat] ?? 1;
+              if (rate > 1) {
+                const eligible = Math.min(amt, cap);
+                bonusSpend += eligible;
+                otherSpend += amt - eligible;
+              } else otherSpend += amt;
+            }
+            return bonusSpend * 5 + otherSpend;
+          }
+          case "special": {
+            return rs.calc(catSpend);
+          }
+          default:
+            return 0;
         }
-        return bonusSpend * 5 + otherSpend * 1;
-      }
-      case "special": {
-        return rs.calc(catSpend);
-      }
-    }
-  })();
+      })();
+      
+  
+  
 
   const pointValue = card.defaultPointValue / 100; // convert cents → $
   const monthlyVal = monthlyPts * pointValue;
 
   const recurringBenefits = card.benefits.filter((b) => b.recurring !== "one-time");
-  const benefitsVal = recurringBenefits.reduce((s, b) => s + b.value, 0);
+  const ongoingBenefitsVal = recurringBenefits.reduce((s, b) => s + b.value, 0);
 
+  const allBenefitsVal = card.benefits.reduce((s, b) => s + b.value, 0);
   const signupVal = card.signupBonus ? card.signupBonus.amount * pointValue : 0;
-  const firstYearTotal = monthlyVal * 12 + benefitsVal + signupVal - card.annualFee;
-  const ongoingAnnual = monthlyVal * 12 + benefitsVal - card.annualFee;
+
+  const firstYearTotal = monthlyVal * 12 + allBenefitsVal + signupVal - card.annualFee;
+  const ongoingAnnual = monthlyVal * 12 + ongoingBenefitsVal - card.annualFee;
 
   return {
     card,
