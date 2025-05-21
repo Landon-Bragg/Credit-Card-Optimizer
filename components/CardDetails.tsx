@@ -1,3 +1,4 @@
+"use client";
 import { CreditCard } from "@/lib/sampleData";
 import {
   Tabs,
@@ -6,7 +7,7 @@ import {
   TabsTrigger,
 } from "@/components/ui/tabs";
 import { BadgeDollarSign, Gift, Info } from "lucide-react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "@/components/motion";
 
 export default function CardDetail({ card }: { card: CreditCard }) {
   return (

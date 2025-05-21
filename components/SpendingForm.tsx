@@ -26,28 +26,50 @@ const CATEGORIES = [
 type CategoryKey = (typeof CATEGORIES)[number]["key"];
 
 /* ----- loyalty options ----- */
+/* ----- loyalty options (reflects ISSUER_PROGRAMS table) ----- */
 export const AIRLINE_OPTIONS = [
-  "MileagePlus",
+  // Star Alliance & friends
+  "MileagePlus",                 // United
+  "Aeroplan",                    // Air Canada
+  "ANA Mileage Club",
+  "LifeMiles",                   // Avianca
+  "KrisFlyer",                   // Singapore Airlines
+  "EVA Infinity MileageLands",
+  "Thai Royal Orchid Plus",
+  "TAP Miles&Go",
+  "Turkish Miles&Smiles",
+
+  // oneworld & partners
   "AAdvantage",
-  "SkyMiles",
-  "Aeroplan",
-  "Flying Blue",
-  "Avios",
-  "Executive Club",
-  "KrisFlyer",
-  "LifeMiles",
-  "Emirates Skywards",
-  "Qantas FF",
+  "Avios",                       // British Airways / Iberia / Aer Lingus
+  "Iberia Plus",
+  "Finnair Plus",
+  "Qatar Privilege Club",
+  "Qantas Frequent Flyer",
+  "Alaska Mileage Plan",
+  "Japan Airlines Mileage Bank",
+  
+  // SkyTeam & independent
+  "Flying Blue",                 // Air France / KLM
+  "Virgin Atlantic Flying Club",
   "Virgin Red",
-  "Rapid Rewards",
+  "Emirates Skywards",
+  "Etihad Guest",
+  "JetBlue TrueBlue",
+  "HawaiianMiles",
+  "Southwest Rapid Rewards",
 ] as const;
 
 export const HOTEL_OPTIONS = [
-  "World of Hyatt",
   "Marriott Bonvoy",
   "Hilton Honors",
+  "World of Hyatt",
   "IHG One Rewards",
+  "Choice Privileges",
+  "Wyndham Rewards",
+  "Accor Live Limitless",
 ] as const;
+
 
 /* ----- data contracts ----- */
 export interface Spending {
