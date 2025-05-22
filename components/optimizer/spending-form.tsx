@@ -13,6 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip"
 import { MultiSelect } from "@/components/ui/multi-select"
 import type { Spending, Preferences } from "@/lib/rewardCalculator"
+import { CreditScoreInput } from "@/components/optimizer/credit-score-input"
 
 const CATEGORIES = [
   { key: "travel", label: "Travel (Flights / Hotels)" },
@@ -30,10 +31,10 @@ type CategoryKey = (typeof CATEGORIES)[number]["key"]
 /* ----- loyalty options ----- */
 export const AIRLINE_OPTIONS = [
   // Star Alliance & friends
-  "MileagePlus", // United
-  "Aeroplan", // Air Canada
+  "United", // United
+  "Air Canada", // Air Canada
   "ANA Mileage Club",
-  "LifeMiles", // Avianca
+  "Avianca", // Avianca
   "KrisFlyer", // Singapore Airlines
   "EVA Infinity MileageLands",
   "Thai Royal Orchid Plus",
@@ -42,7 +43,7 @@ export const AIRLINE_OPTIONS = [
 
   // oneworld & partners
   "AAdvantage",
-  "Avios", // British Airways / Iberia / Aer Lingus
+  "British Airways", // British Airways / Iberia / Aer Lingus
   "Iberia Plus",
   "Finnair Plus",
   "Qatar Privilege Club",
@@ -116,6 +117,11 @@ export function SpendingForm({ onCalculate }: SpendingFormProps) {
     return saved ? JSON.parse(saved) : false
   })
 
+  const [creditScore, setCreditScore] = useState<number | null>(() => {
+    const saved = localStorage.getItem("credit_score")
+    return saved ? JSON.parse(saved) : 700
+  })
+
   // Save to localStorage when values change
   useEffect(() => {
     localStorage.setItem("spending", JSON.stringify(spending))
@@ -126,7 +132,8 @@ export function SpendingForm({ onCalculate }: SpendingFormProps) {
     localStorage.setItem("pref_hotels", JSON.stringify(hotels))
     localStorage.setItem("max_fee", String(maxFee))
     localStorage.setItem("no_fee_only", JSON.stringify(noFeeOnly))
-  }, [airlines, hotels, maxFee, noFeeOnly])
+    localStorage.setItem("credit_score", JSON.stringify(creditScore))
+  }, [airlines, hotels, maxFee, noFeeOnly, creditScore])
 
   const handleSpendingChange = (category: CategoryKey, value: number) => {
     setSpending((prev) => ({ ...prev, [category]: value }))
@@ -142,6 +149,7 @@ export function SpendingForm({ onCalculate }: SpendingFormProps) {
       preferredPrograms,
       maxAnnualFee: noFeeOnly ? 0 : maxFee,
       rewardType: "points",
+      creditScore: creditScore,
     })
   }
 
@@ -177,7 +185,7 @@ export function SpendingForm({ onCalculate }: SpendingFormProps) {
                         <TooltipContent side="right">Average dollars per month</TooltipContent>
                       </Tooltip>
                     </Label>
-                    <span className="font-medium">${spending[key as keyof Spending]}</span>
+                    <span className="font-medium text-primary">${spending[key as keyof Spending]}</span>
                   </div>
                   <div className="flex items-center gap-4">
                     <Slider
@@ -267,6 +275,10 @@ export function SpendingForm({ onCalculate }: SpendingFormProps) {
                   onChange={setHotels}
                   placeholder="Choose hotels..."
                 />
+              </div>
+
+              <div className="mt-6 pt-6 border-t border-border/60">
+                <CreditScoreInput value={creditScore} onChange={setCreditScore} />
               </div>
             </div>
 

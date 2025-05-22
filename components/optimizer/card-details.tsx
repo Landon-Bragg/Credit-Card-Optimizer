@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { cn } from "@/lib/utils"
 
 interface CardDetailsProps {
   result: CardResult
@@ -43,11 +44,11 @@ export function CardDetails({ result }: CardDetailsProps) {
         <CardHeader>
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-4">
-              <div className="flex h-16 w-16 items-center justify-center rounded-lg bg-muted">
+              <div className="flex h-20 w-20 items-center justify-center rounded-lg bg-muted p-1 shadow-sm transition-all hover:shadow-md">
                 <img
-                  src={card.image || "/placeholder.svg?height=64&width=64"}
+                  src={card.image || "/placeholder.svg?height=80&width=80"}
                   alt={card.name}
-                  className="h-12 w-12 object-contain"
+                  className="h-16 w-16 object-contain"
                 />
               </div>
               <div>
@@ -55,7 +56,7 @@ export function CardDetails({ result }: CardDetailsProps) {
                 <CardDescription className="text-base">{card.issuer}</CardDescription>
               </div>
             </div>
-            <Button asChild>
+            <Button asChild className="transition-all hover:shadow-md hover:translate-y-[-2px]">
               <a href={card.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2">
                 Apply Now
                 <ExternalLink className="h-4 w-4" />
@@ -101,7 +102,28 @@ export function CardDetails({ result }: CardDetailsProps) {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Recommended Credit Score</span>
-                    <span className="font-medium">{card.creditScore[0]}+ (out of 850)</span>
+                    <span className="font-medium flex items-center gap-1">
+                      {card.noCreditOK ? (
+                        <Badge variant="outline" className="bg-blue-100 text-blue-800 border-blue-200">
+                          No Credit History OK
+                        </Badge>
+                      ) : (
+                        <Badge
+                          variant="outline"
+                          className={cn(
+                            card.creditScore[0] >= 740
+                              ? "bg-emerald-100 text-emerald-800 border-emerald-200"
+                              : card.creditScore[0] >= 670
+                                ? "bg-green-100 text-green-800 border-green-200"
+                                : card.creditScore[0] >= 580
+                                  ? "bg-amber-100 text-amber-800 border-amber-200"
+                                  : "bg-red-100 text-red-800 border-red-200",
+                          )}
+                        >
+                          {card.creditScore[0]}+ (out of 850)
+                        </Badge>
+                      )}
+                    </span>
                   </div>
                 </div>
               </div>

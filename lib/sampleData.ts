@@ -1,6 +1,9 @@
 // ============================================================================
 //  Credit‑card sample data — condensed loyalty lists by issuer + direct links
 //  (Default point values remain in *cents* per point; 1 ¢ = $0.01.)
+//  Updated May 2025: includes starter/no‑credit cards, refined point‑values,
+//  simplified Bilt calculation (no Rent‑Day boost), and accurate rotating‑cat
+//  structures.
 // ============================================================================
 
 export type RewardStructure =
@@ -18,23 +21,24 @@ export interface CreditCard {
   id: string;
   name: string;
   issuer: Issuer;
-  image: string;          // /public/... (Next.js will resolve)
-  url: string;            // direct link to the issuer’s card page
+  image: string; // /public/... (Next.js will resolve)
+  url: string; // direct link to the issuer’s card page
   annualFee: number;
-  defaultPointValue: number; // ¢ / point  | 1 = ¢‑back dollar
+  defaultPointValue: number; // ¢ per point (cash = 1)
   rewardStructure: RewardStructure;
-  loyaltyPrograms: string[]; // populated from ISSUER_PROGRAMS below
+  loyaltyPrograms: string[];
   signupBonus?: {
-    amount: number;          // points / miles / $ (see type)
-    spendRequirement: number; // $ required to earn bonus
-    months: number;          // time window
+    amount: number;
+    spendRequirement: number;
+    months: number;
   };
   benefits: {
     description: string;
-    value: number;           // $ face‑value (estimate)
+    value: number; // $ estimate
     recurring: "one-time" | "annual" | "monthly";
   }[];
-  creditScore: [number, number]; // recommended range
+  creditScore: [number, number];
+  noCreditOK?: boolean; // present if score is optional
   type: "cash" | "points";
   disclaimer?: string;
 }
@@ -51,127 +55,117 @@ type Issuer =
   | "Capital One"
   | "Wells Fargo"
   | "Discover"
-  | "Bank of America";
+  | "Bank of America"
+  | "Petal";
 
 export const ISSUER_PROGRAMS: Record<Issuer, string[]> = {
-  /* American Express Membership Rewards */
   Amex: [
-    "Aeroplan",                    // Air Canada
-    "KrisFlyer",                   // Singapore Airlines
-    "ANA Mileage Club",            // ANA
-    "LifeMiles",                   // Avianca
-    "Avios",                       // British Airways / Aer Lingus / Iberia bucket
-    "Asia Miles",                  // Cathay Pacific
-    "Qatar Privilege Club",        // Qatar Airways
-    "Qantas Frequent Flyer",       // Qantas
-    "Flying Blue",                 // Air France / KLM
-    "Virgin Atlantic Flying Club", // Virgin Atlantic
-    "Emirates Skywards",           // Emirates
-    "Etihad Guest",                // Etihad
-    "JetBlue TrueBlue",            // jetBlue
-    "HawaiianMiles",               // Hawaiian Airlines
-    /* Hotels */
+    "Air Canada",
+    "KrisFlyer",
+    "ANA Mileage Club",
+    "Avianca",
+    "British Airways",
+    "Asia Miles",
+    "Qatar Privilege Club",
+    "Qantas Frequent Flyer",
+    "Flying Blue",
+    "Virgin Atlantic Flying Club",
+    "Emirates Skywards",
+    "Etihad Guest",
+    "JetBlue TrueBlue",
+    "HawaiianMiles",
+    // Hotels
     "Marriott Bonvoy",
     "Hilton Honors",
     "Choice Privileges",
   ],
-
-  /* Chase Ultimate Rewards */
   Chase: [
-    "MileagePlus",                 // United
-    "Aeroplan",                    // Air Canada
-    "KrisFlyer",                   // Singapore Airlines
-    "Avios",                       // British Airways / Iberia / Aer Lingus
-    "Flying Blue",                 // Air France / KLM
-    "Virgin Atlantic Flying Club", // Virgin Atlantic
-    "Emirates Skywards",           // Emirates
-    "JetBlue TrueBlue",            // jetBlue
-    "Southwest Rapid Rewards",     // Southwest
-    /* Hotels */
+    "United",
+    "Air Canada",
+    "KrisFlyer",
+    "British Airways",
+    "Flying Blue",
+    "Virgin Atlantic Flying Club",
+    "Emirates Skywards",
+    "JetBlue TrueBlue",
+    "Southwest Rapid Rewards",
+    // Hotels
     "Marriott Bonvoy",
     "World of Hyatt",
     "IHG One Rewards",
   ],
-
-  /* Capital One Miles */
   "Capital One": [
-    "Aeroplan",
-    "LifeMiles",                   // Avianca
+    "Air Canada",
+    "Avianca",
     "KrisFlyer",
     "Flying Blue",
-    "TAP Miles&Go",                // TAP Air Portugal
-    "Turkish Miles&Smiles",        // Turkish Airlines
-    "Asia Miles",                  // Cathay Pacific
+    "TAP Miles&Go",
+    "Turkish Miles&Smiles",
+    "Asia Miles",
     "Finnair Plus",
-    "Avios",                       // British Airways
+    "British Airways",
     "Qantas Frequent Flyer",
     "Emirates Skywards",
     "Etihad Guest",
-    "Virgin Red",                  // Virgin Atlantic group
+    "Virgin Red",
     "JetBlue TrueBlue",
-    /* Hotels */
+    // Hotels
     "Choice Privileges",
     "Wyndham Rewards",
     "Accor Live Limitless",
   ],
-
-  /* Citi ThankYou® Rewards */
   Citi: [
-    "LifeMiles",
+    "Avianca",
     "KrisFlyer",
     "Flying Blue",
-    "Miles & Smiles",              // Turkish Airlines
+    "Miles & Smiles",
     "Asia Miles",
     "Aeromexico Rewards",
-    "EVA Infinity MileageLands",   // EVA Air
+    "EVA Infinity MileageLands",
     "Thai Royal Orchid Plus",
     "Qatar Privilege Club",
     "Qantas Frequent Flyer",
     "Virgin Atlantic Flying Club",
     "Etihad Guest",
     "JetBlue TrueBlue",
-    /* Hotels */
+    // Hotels
     "Choice Privileges",
     "Wyndham Rewards",
     "Accor Live Limitless",
   ],
-
-  /* Bilt Rewards */
   Bilt: [
-    "MileagePlus",
-    "Aeroplan",
-    "LifeMiles",
-    "Avios",                       // BA / Aer Lingus / Iberia
+    "United",
+    "Air Canada",
+    "Avianca",
+    "British Airways",
     "Asia Miles",
     "TAP Miles&Go",
     "Turkish Miles&Smiles",
     "Flying Blue",
     "Emirates Skywards",
     "Virgin Atlantic Flying Club",
-    /* unique partners */
     "Alaska Mileage Plan",
     "Japan Airlines Mileage Bank",
     "Southwest Rapid Rewards",
-    /* Hotels */
+    // Hotels
     "Marriott Bonvoy",
     "Hilton Honors",
     "World of Hyatt",
     "IHG One Rewards",
     "Accor Live Limitless",
   ],
-
-  /* Issuers with no transfer partners */
   "Wells Fargo": [],
   Discover: [],
   "Bank of America": ["Alaska Mileage Plan"],
+  Petal: [],
 };
 
 // ---------------------------------------------------------------------------
-//  All card objects — reference the issuer table + include a `url` field
+//  Card catalogue (point values reflect May 2025 TPG valuations)
 // ---------------------------------------------------------------------------
 
 export const cards: CreditCard[] = [
-  /* ────────── BILT ────────── */
+  /* ──────────────── BILT ──────────────── */
   {
     id: "bilt",
     name: "Bilt Mastercard®",
@@ -179,31 +173,23 @@ export const cards: CreditCard[] = [
     image: "/cards/bilt.png",
     url: "https://www.biltrewards.com/mastercard",
     annualFee: 0,
-    defaultPointValue: 1.8,
+    defaultPointValue: 2.05, // ¢
     type: "points",
     rewardStructure: {
       type: "special",
-      description: "1× rent, 3× dining, 2× travel; 6×/4×/2× on Rent Day (1st)",
-      calc: (sp) => {
-        const rentDay = new Date().getDate() === 1;
-        return (
-          sp.rent * 1 +
-          sp.dining * (rentDay ? 4 : 3) +
-          sp.travel * (rentDay ? 6 : 2) +
-          sp.drugstores +
-          sp.groceries +
-          sp.gas +
-          sp.online +
-          sp.other
-        );
-      },
+      description: "1× rent, 3× dining, 2× travel; 6×/4×/2× on Rent Day (1st) — *boost not included in calc*",
+      calc: (sp) =>
+        sp.rent * 1 +
+        sp.dining * 3 +
+        sp.travel * 2 +
+        (sp.drugstores + sp.groceries + sp.gas + sp.online + sp.other) * 1,
     },
-    loyaltyPrograms: ISSUER_PROGRAMS["Bilt"],
+    loyaltyPrograms: ISSUER_PROGRAMS.Bilt,
     benefits: [],
     creditScore: [670, 850],
   },
 
-  /* ────────── CHASE FLEXIBLE ────────── */
+  /* ──────────────── CHASE FLEXIBLE ──────────────── */
   {
     id: "freedom_unlimited",
     name: "Chase Freedom Unlimited®",
@@ -211,7 +197,7 @@ export const cards: CreditCard[] = [
     image: "/cards/freedom_unlimited.png",
     url: "https://creditcards.chase.com/cash-back-credit-cards/freedom/unlimited",
     annualFee: 0,
-    defaultPointValue: 1.25,
+    defaultPointValue: 2.05,
     type: "points",
     rewardStructure: {
       type: "category",
@@ -226,7 +212,7 @@ export const cards: CreditCard[] = [
         other: 1.5,
       },
     },
-    loyaltyPrograms: ISSUER_PROGRAMS["Chase"],
+    loyaltyPrograms: ISSUER_PROGRAMS.Chase,
     signupBonus: { amount: 20000, spendRequirement: 500, months: 3 },
     benefits: [],
     creditScore: [670, 850],
@@ -238,7 +224,7 @@ export const cards: CreditCard[] = [
     image: "/cards/freedom_flex.png",
     url: "https://creditcards.chase.com/cash-back-credit-cards/freedom/flex",
     annualFee: 0,
-    defaultPointValue: 1.25,
+    defaultPointValue: 2.05,
     type: "points",
     rewardStructure: {
       type: "rotating",
@@ -250,13 +236,13 @@ export const cards: CreditCard[] = [
         travel: 5,
         other: 5,
       },
-      cap: 1500,
+      cap: 1500, // per calendar quarter
     },
-    loyaltyPrograms: ISSUER_PROGRAMS["Chase"],
+    loyaltyPrograms: ISSUER_PROGRAMS.Chase,
     signupBonus: { amount: 20000, spendRequirement: 500, months: 3 },
     benefits: [],
     creditScore: [670, 850],
-    disclaimer: "5% categories rotate quarterly; $1,500 combined cap.",
+    disclaimer: "5% categories rotate quarterly; $1,500 combined quarterly cap.",
   },
   {
     id: "csp",
@@ -265,13 +251,13 @@ export const cards: CreditCard[] = [
     image: "/cards/csp.png",
     url: "https://creditcards.chase.com/rewards-credit-cards/sapphire/preferred",
     annualFee: 95,
-    defaultPointValue: 1.6,
+    defaultPointValue: 2.05,
     type: "points",
     rewardStructure: {
       type: "category",
       categories: { travel: 2, dining: 3, other: 1 },
     },
-    loyaltyPrograms: ISSUER_PROGRAMS["Chase"],
+    loyaltyPrograms: ISSUER_PROGRAMS.Chase,
     signupBonus: { amount: 60000, spendRequirement: 4000, months: 3 },
     benefits: [
       { description: "$50 Annual Hotel Credit", value: 50, recurring: "annual" },
@@ -285,13 +271,13 @@ export const cards: CreditCard[] = [
     image: "/cards/csr.png",
     url: "https://creditcards.chase.com/rewards-credit-cards/sapphire/reserve",
     annualFee: 550,
-    defaultPointValue: 1.8,
+    defaultPointValue: 2.05,
     type: "points",
     rewardStructure: {
       type: "category",
       categories: { travel: 3, dining: 3, other: 1 },
     },
-    loyaltyPrograms: ISSUER_PROGRAMS["Chase"],
+    loyaltyPrograms: ISSUER_PROGRAMS.Chase,
     signupBonus: { amount: 60000, spendRequirement: 4000, months: 3 },
     benefits: [
       { description: "$300 Annual Travel Credit", value: 300, recurring: "annual" },
@@ -301,7 +287,7 @@ export const cards: CreditCard[] = [
     creditScore: [720, 850],
   },
 
-  /* ────────── CITI FLEXIBLE ────────── */
+  /* ──────────────── CITI FLEXIBLE ──────────────── */
   {
     id: "citi_custom_cash",
     name: "Citi Custom Cash®",
@@ -309,10 +295,10 @@ export const cards: CreditCard[] = [
     image: "/cards/citi_custom_cash.png",
     url: "https://www.citi.com/credit-cards/citi-custom-cash-credit-card",
     annualFee: 0,
-    defaultPointValue: 1.0,
+    defaultPointValue: 1.8,
     type: "points",
     rewardStructure: { type: "dynamic", topCategories: 1 },
-    loyaltyPrograms: ISSUER_PROGRAMS["Citi"],
+    loyaltyPrograms: ISSUER_PROGRAMS.Citi,
     benefits: [],
     creditScore: [670, 850],
     disclaimer: "5% on top eligible category up to $500 spend/mo; 1% thereafter.",
@@ -324,13 +310,13 @@ export const cards: CreditCard[] = [
     image: "/cards/citi_premier.png",
     url: "https://www.citi.com/credit-cards/citi-premier-credit-card",
     annualFee: 95,
-    defaultPointValue: 1.3,
+    defaultPointValue: 1.8,
     type: "points",
     rewardStructure: {
       type: "category",
       categories: { travel: 3, dining: 3, groceries: 3, gas: 3, other: 1 },
     },
-    loyaltyPrograms: ISSUER_PROGRAMS["Citi"],
+    loyaltyPrograms: ISSUER_PROGRAMS.Citi,
     signupBonus: { amount: 60000, spendRequirement: 4000, months: 3 },
     benefits: [
       { description: "$100 Hotel Savings Credit", value: 100, recurring: "annual" },
@@ -338,7 +324,7 @@ export const cards: CreditCard[] = [
     creditScore: [700, 850],
   },
 
-  /* ────────── AMERICAN EXPRESS ────────── */
+  /* ──────────────── AMERICAN EXPRESS ──────────────── */
   {
     id: "amex_platinum",
     name: "American Express® Platinum",
@@ -346,10 +332,13 @@ export const cards: CreditCard[] = [
     image: "/cards/amex_platinum.png",
     url: "https://www.americanexpress.com/us/credit-cards/card/platinum/",
     annualFee: 695,
-    defaultPointValue: 1.6,
+    defaultPointValue: 2.0,
     type: "points",
-    rewardStructure: { type: "category", categories: { travel: 5, dining: 1, other: 1 } },
-    loyaltyPrograms: ISSUER_PROGRAMS["Amex"],
+    rewardStructure: {
+      type: "category",
+      categories: { travel: 5, dining: 1, other: 1 },
+    },
+    loyaltyPrograms: ISSUER_PROGRAMS.Amex,
     signupBonus: { amount: 80000, spendRequirement: 6000, months: 6 },
     benefits: [
       { description: "$200 Airline Incidentals Credit", value: 200, recurring: "annual" },
@@ -366,10 +355,13 @@ export const cards: CreditCard[] = [
     image: "/cards/amex_gold.png",
     url: "https://www.americanexpress.com/us/credit-cards/card/gold/",
     annualFee: 250,
-    defaultPointValue: 1.6,
+    defaultPointValue: 2.0,
     type: "points",
-    rewardStructure: { type: "category", categories: { dining: 4, groceries: 4, travel: 3, other: 1 } },
-    loyaltyPrograms: ISSUER_PROGRAMS["Amex"],
+    rewardStructure: {
+      type: "category",
+      categories: { dining: 4, groceries: 4, travel: 3, other: 1 },
+    },
+    loyaltyPrograms: ISSUER_PROGRAMS.Amex,
     signupBonus: { amount: 60000, spendRequirement: 4000, months: 6 },
     benefits: [
       { description: "$120 Dining Credit", value: 120, recurring: "annual" },
@@ -384,16 +376,16 @@ export const cards: CreditCard[] = [
     image: "/cards/amex_bbplus.png",
     url: "https://www.americanexpress.com/us/credit-cards/card/bluebusinessplus/",
     annualFee: 0,
-    defaultPointValue: 1.6,
+    defaultPointValue: 2.0,
     type: "points",
     rewardStructure: { type: "fixed", rate: 2 },
-    loyaltyPrograms: ISSUER_PROGRAMS["Amex"],
+    loyaltyPrograms: ISSUER_PROGRAMS.Amex,
     benefits: [],
     creditScore: [670, 850],
     disclaimer: "2× on all purchases up to $50k per calendar year.",
   },
 
-  /* ────────── CAPITAL ONE ────────── */
+  /* ──────────────── CAPITAL ONE ──────────────── */
   {
     id: "venture_x",
     name: "Capital One Venture X®",
@@ -401,20 +393,23 @@ export const cards: CreditCard[] = [
     image: "/cards/venture_x.png",
     url: "https://www.capitalone.com/credit-cards/venture-x/",
     annualFee: 395,
-    defaultPointValue: 1.7,
+    defaultPointValue: 1.85,
     type: "points",
-    rewardStructure: { type: "category", categories: { travel: 10, dining: 2, other: 2 } },
+    rewardStructure: {
+      type: "category",
+      categories: { travel: 10, dining: 2, other: 2 },
+    },
     loyaltyPrograms: ISSUER_PROGRAMS["Capital One"],
     signupBonus: { amount: 75000, spendRequirement: 4000, months: 3 },
     benefits: [
       { description: "$300 Annual Travel Credit", value: 300, recurring: "annual" },
-      { description: "10,000‑mile Anniversary Bonus", value: 170, recurring: "annual" },
+      { description: "10,000‑mile Anniversary Bonus", value: 185, recurring: "annual" },
       { description: "Priority Pass & Capital One Lounge", value: 150, recurring: "annual" },
     ],
     creditScore: [720, 850],
   },
 
-  /* ────────── SIMPLE CASHBACK (WELLS / DISCOVER / CITI / CAP1) ────────── */
+  /* ──────────────── SIMPLE CASHBACK ──────────────── */
   {
     id: "wf_active_cash",
     name: "Wells Fargo Active Cash®",
@@ -443,7 +438,7 @@ export const cards: CreditCard[] = [
       quarterly: { groceries: 5, gas: 5, online: 5, dining: 5 },
       cap: 1500,
     },
-    loyaltyPrograms: ISSUER_PROGRAMS["Discover"],
+    loyaltyPrograms: ISSUER_PROGRAMS.Discover,
     benefits: [
       { description: "Cashback Match (year 1)", value: 200, recurring: "one-time" },
     ],
@@ -459,7 +454,7 @@ export const cards: CreditCard[] = [
     defaultPointValue: 1,
     type: "cash",
     rewardStructure: { type: "fixed", rate: 2 },
-    loyaltyPrograms: ISSUER_PROGRAMS["Citi"], // technically pool into TY after conversion
+    loyaltyPrograms: ISSUER_PROGRAMS.Citi,
     benefits: [],
     creditScore: [670, 850],
   },
@@ -481,7 +476,7 @@ export const cards: CreditCard[] = [
     creditScore: [700, 850],
   },
 
-  /* ─────────────────────────────────────────  COBRANDED AIRLINE  ───────────────────────────────────────── */
+  /* ──────────────── COBRANDED AIRLINE ──────────────── */
   {
     id: "alaska_visa",
     name: "Alaska Airlines Visa Signature®",
@@ -489,7 +484,7 @@ export const cards: CreditCard[] = [
     image: "/cards/alaska_visa.png",
     url: "https://www.bankofamerica.com/credit-cards/products/alaska-airlines-credit-card/",
     annualFee: 95,
-    defaultPointValue: 1.3, // Alaska miles value estimate
+    defaultPointValue: 1.3,
     type: "points",
     rewardStructure: {
       type: "category",
@@ -509,7 +504,7 @@ export const cards: CreditCard[] = [
     issuer: "Amex",
     image: "/cards/delta_gold.png",
     url: "https://www.americanexpress.com/us/credit-cards/card/delta-skymiles-gold-american-express-card/",
-    annualFee: 0, // $0 intro, then $150 (simplified intro fee omitted)
+    annualFee: 0, // intro year; $150 thereafter
     defaultPointValue: 1.3,
     type: "points",
     rewardStructure: {
@@ -541,7 +536,7 @@ export const cards: CreditCard[] = [
     signupBonus: { amount: 85000, spendRequirement: 4000, months: 3 },
     benefits: [
       { description: "Annual Companion Certificate", value: 250, recurring: "annual" },
-      { description: "Global Entry/TSA Pre✓® Credit", value: 100, recurring: "4‑yr" as any },
+      { description: "Global Entry/TSA Pre✓® Credit", value: 100, recurring: "one-time" },
     ],
     creditScore: [700, 850],
   },
@@ -550,19 +545,77 @@ export const cards: CreditCard[] = [
     name: "United Explorer Card",
     issuer: "Chase",
     image: "/cards/united_explorer.png",
-    url: "https://www2.theexplorercard.com/rewards-cards/explorer-card?CELL=D4M&jp_cmp=cc/United+Explorer_Brand_Exact_United+Explorer_SEM_US_NA_Standard_NA/sea/25935921866/Explorer+Card&gclid=5d8a9049bfbb18a2c48df864ab77ba09&gclsrc=3p.ds&msclkid=5d8a9049bfbb18a2c48df864ab77ba09",
-    annualFee: 0, // $0 intro year then $95 simplified as 95
+    url: "https://www.chase.com/personal/credit-cards/united/explorer",
+    annualFee: 0, // intro year; then $95
     defaultPointValue: 1.3,
     type: "points",
     rewardStructure: {
       type: "category",
       categories: { travel: 2, dining: 2, hotels: 2, other: 1 },
     },
-    loyaltyPrograms: ["MileagePlus"],
+    loyaltyPrograms: ["United"],
     signupBonus: { amount: 60000, spendRequirement: 3000, months: 3 },
     benefits: [
       { description: "First Checked Bag Free (2 rt)", value: 60, recurring: "annual" },
     ],
     creditScore: [670, 850],
+  },
+
+  /* ──────────────── STARTER / NO‑CREDIT ──────────────── */
+  {
+    id: "cap1_platinum_secured",
+    name: "Capital One Platinum Secured",
+    issuer: "Capital One",
+    image: "/cards/cap1_platinum_secured.png",
+    url: "https://www.capitalone.com/credit-cards/platinum-secured/",
+    annualFee: 0,
+    defaultPointValue: 1,
+    type: "cash",
+    rewardStructure: { type: "fixed", rate: 1 },
+    loyaltyPrograms: [],
+    benefits: [],
+    creditScore: [0, 600],
+    noCreditOK: true,
+  },
+  {
+    id: "discover_it_student",
+    name: "Discover it® Student CashBack",
+    issuer: "Discover",
+    image: "/cards/discover_it_student.png",
+    url: "https://www.discover.com/student-credit-cards/cashback/",
+    annualFee: 0,
+    defaultPointValue: 1,
+    type: "cash",
+    rewardStructure: {
+      type: "rotating",
+      quarterly: {
+        groceries: 5,
+        gas: 5,
+        online: 5,
+        dining: 5,
+        travel: 5,
+        other: 5,
+      },
+      cap: 1500,
+    },
+    loyaltyPrograms: [],
+    benefits: [],
+    creditScore: [0, 650],
+    noCreditOK: true,
+  },
+  {
+    id: "petal2",
+    name: "Petal® 2 “Cash Back, No Fees” Visa",
+    issuer: "Petal",
+    image: "/cards/petal2.png",
+    url: "https://www.petalcard.com/card/petal-2",
+    annualFee: 0,
+    defaultPointValue: 1,
+    type: "cash",
+    rewardStructure: { type: "fixed", rate: 1.5 },
+    loyaltyPrograms: [],
+    benefits: [],
+    creditScore: [0, 700],
+    noCreditOK: true,
   },
 ];

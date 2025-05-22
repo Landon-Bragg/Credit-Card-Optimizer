@@ -29,11 +29,11 @@ type CategoryKey = (typeof CATEGORIES)[number]["key"];
 /* ----- loyalty options (reflects ISSUER_PROGRAMS table) ----- */
 export const AIRLINE_OPTIONS = [
   // Star Alliance & friends
-  "MileagePlus",                 // United
-  "Aeroplan",                    // Air Canada
+  "United",
+  "Air Canada",
   "ANA Mileage Club",
-  "LifeMiles",                   // Avianca
-  "KrisFlyer",                   // Singapore Airlines
+  "Avianca",
+  "KrisFlyer",
   "EVA Infinity MileageLands",
   "Thai Royal Orchid Plus",
   "TAP Miles&Go",
@@ -41,7 +41,7 @@ export const AIRLINE_OPTIONS = [
 
   // oneworld & partners
   "AAdvantage",
-  "Avios",                       // British Airways / Iberia / Aer Lingus
+  "British Airways",                       // British Airways / Iberia / Aer Lingus
   "Iberia Plus",
   "Finnair Plus",
   "Qatar Privilege Club",

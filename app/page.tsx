@@ -25,6 +25,16 @@ export default function Home() {
         // Otherwise, filter by cards that have at least one of the preferred programs
         return c.loyaltyPrograms.some((program) => preferences.preferredPrograms.includes(program))
       })
+      // Filter by credit score
+      .filter((c) => {
+        // If user has no credit history, only show cards that accept no credit history
+        if (preferences.creditScore === null) {
+          return c.noCreditOK === true
+        }
+
+        // Otherwise, show cards where the user's credit score meets the minimum requirement
+        return preferences.creditScore >= c.creditScore[0]
+      })
 
     // Calculate value for each card
     const ranked = filteredCards
@@ -42,7 +52,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/30">
-      <header className="border-b border-border/40">
+      <header className="border-b border-border/40 bg-gradient-to-r from-background to-secondary/30">
         <div className="container mx-auto flex h-16 items-center justify-between px-4">
           <div className="flex items-center gap-2">
             <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary">

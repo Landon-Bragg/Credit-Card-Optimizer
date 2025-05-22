@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts"
+import { cn } from "@/lib/utils"
 
 interface ResultsSectionProps {
   results: CardResult[]
@@ -59,7 +60,13 @@ export function ResultsSection({ results, onViewDetails }: ResultsSectionProps) 
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.1 }}
               >
-                <Card className="h-full overflow-hidden transition-all hover:shadow-md">
+                <Card
+                  className={cn(
+                    "h-full overflow-hidden transition-all hover:shadow-md hover:shadow-primary/10 group cursor-pointer",
+                    index === 0 && "card-highlight",
+                  )}
+                  onClick={() => onViewDetails(result)}
+                >
                   {index === 0 && (
                     <div className="bg-primary px-4 py-1 text-center text-xs font-medium text-primary-foreground">
                       Best Match
@@ -68,11 +75,11 @@ export function ResultsSection({ results, onViewDetails }: ResultsSectionProps) 
                   <CardHeader className="pb-2">
                     <div className="flex items-start justify-between">
                       <div className="flex items-center gap-3">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-md bg-muted">
+                        <div className="flex h-16 w-16 items-center justify-center rounded-md bg-muted p-1 transition-transform group-hover:scale-105">
                           <img
-                            src={result.card.image || "/placeholder.svg?height=40&width=40"}
+                            src={result.card.image || "/placeholder.svg?height=60&width=60"}
                             alt={result.card.name}
-                            className="h-8 w-8 object-contain"
+                            className="h-14 w-14 object-contain"
                           />
                         </div>
                         <div>
@@ -101,6 +108,33 @@ export function ResultsSection({ results, onViewDetails }: ResultsSectionProps) 
                         <span className="text-muted-foreground">Net Annual Value</span>
                         <span className="font-medium">${result.netAnnual}</span>
                       </div>
+                      {/* Add credit score requirement */}
+                      <div className="flex justify-between mt-2">
+                        <span className="text-muted-foreground">Credit Score</span>
+                        <span className="font-medium flex items-center gap-1">
+                          {result.card.noCreditOK ? (
+                            <Badge variant="outline" className="text-xs bg-blue-100 text-blue-800 border-blue-200">
+                              No Credit OK
+                            </Badge>
+                          ) : (
+                            <Badge
+                              variant="outline"
+                              className={cn(
+                                "text-xs",
+                                result.card.creditScore[0] >= 740
+                                  ? "bg-emerald-100 text-emerald-800 border-emerald-200"
+                                  : result.card.creditScore[0] >= 670
+                                    ? "bg-green-100 text-green-800 border-green-200"
+                                    : result.card.creditScore[0] >= 580
+                                      ? "bg-amber-100 text-amber-800 border-amber-200"
+                                      : "bg-red-100 text-red-800 border-red-200",
+                              )}
+                            >
+                              {result.card.creditScore[0]}+
+                            </Badge>
+                          )}
+                        </span>
+                      </div>
                     </div>
 
                     {result.card.loyaltyPrograms.length > 0 && (
@@ -123,8 +157,11 @@ export function ResultsSection({ results, onViewDetails }: ResultsSectionProps) 
                   </CardContent>
                   <CardFooter>
                     <Button
-                      onClick={() => onViewDetails(result)}
-                      className="w-full"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        onViewDetails(result)
+                      }}
+                      className="w-full transition-all hover:shadow-md hover:translate-y-[-2px]"
                       variant={index === 0 ? "default" : "outline"}
                     >
                       View Details

@@ -8,7 +8,6 @@ import { usePathname } from "next/navigation"
 import { CreditCard, BarChart3, Settings, Home, PlusCircle, Bell, Search, User, LogOut } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { ModeToggle } from "@/components/mode-toggle"
 import {
   DropdownMenu,
   DropdownMenuContent,
